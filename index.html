@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Override</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Global --- */
+        body { margin: 0; padding: 0; background-color: black; color: #0F0; font-family: 'VT323', monospace; overflow-x: hidden; }
+        .font-th { font-family: 'Kanit', sans-serif !important; }
+        
+        /* Matrix BG */
+        canvas { position: fixed; top: 0; left: 0; z-index: 0; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .red-text { color: #ff3333; text-shadow: 0 0 5px red; }
+        .green-text { color: #0F0; text-shadow: 0 0 5px #0F0; }
+        .center-flex { display: flex; justify-content: center; align-items: center; }
+
+        /* --- Page 1: Login Overlay --- */
+        #login-page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); }
+        
+        .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #0F0; box-shadow: 0 0 15px #0F0; margin-bottom: 20px; background: #000; }
+        
+        .login-btn {
+            background: rgba(0, 200, 0, 0.2); border: 2px solid #0F0; color: #fff; padding: 15px 40px; font-size: 1.5rem; cursor: pointer;
+            backdrop-filter: blur(5px); box-shadow: 0 0 10px #0F0; font-family: 'VT323', monospace; transition: 0.3s;
+        }
+        .login-btn:hover { background: #0F0; color: #000; box-shadow: 0 0 30px #0F0; }
+
+        /* --- Modals (Popups) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .hack-box {
+            width: 400px; padding: 20px; border: 2px solid #0F0; background: #000; 
+            box-shadow: 0 0 20px #0F0; text-align: center; position: relative;
+        }
+        .hack-box.red-border { border-color: red; box-shadow: 0 0 20px red; }
+
+        .scan-line { width: 100%; height: 2px; background: #0F0; position: absolute; top: 0; left: 0; animation: scan 2s infinite; opacity: 0.5; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+        .input-secret {
+            background: rgba(0, 50, 0, 0.5); border: 1px solid #0F0; color: #0F0; padding: 10px; width: 80%;
+            font-family: 'VT323', monospace; font-size: 1.2rem; outline: none; text-align: center; margin-top: 15px;
+        }
+        
+        .captcha-box { margin-top: 15px; border: 1px dashed #fff; padding: 10px; cursor: pointer; }
+        .captcha-box:hover { background: rgba(255,255,255,0.1); }
+
+        /* --- Page 2: System Dashboard --- */
+        #system-page { position: relative; z-index: 2; width: 100%; min-height: 100vh; background: rgba(0,0,0,0.85); display: none; }
+        
+        /* Navbar */
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px 30px;
+            border-bottom: 2px solid #0F0; background: #000; box-shadow: 0 5px 15px rgba(0,255,0,0.2);
+        }
+        .nav-left { font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+        .nav-profile { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #0F0; }
+
+        /* Language Toggle */
+        .switch { position: relative; display: inline-block; width: 60px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: transparent; border: 2px solid #0F0; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 2px; background-color: #0F0; transition: .4s; border-radius: 50%; }
+        input:checked + .slider:before { transform: translateX(32px); }
+        /* Text labels for switch */
+        .switch-label { position: absolute; color: #0F0; font-size: 12px; top: 5px; font-weight: bold; }
+        .lbl-en { right: 8px; } .lbl-th { left: 8px; opacity: 0; }
+        input:checked ~ .lbl-en { opacity: 0; } input:checked ~ .lbl-th { opacity: 1; }
+
+
+        /* Game Grid */
+        .game-grid { display: flex; justify-content: center; padding: 50px; }
+        .game-card {
+            width: 250px; border: 1px solid #0F0; border-radius: 15px; overflow: hidden;
+            background: rgba(0, 20, 0, 0.6); transition: 0.3s; cursor: pointer; text-align: center;
+        }
+        .game-card:hover { transform: scale(1.05); box-shadow: 0 0 20px #0F0; }
+        .game-img { width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid #0F0; }
+        .game-title { padding: 10px; font-size: 1.5rem; font-weight: bold; }
+        .hack-btn-text { padding-bottom: 15px; font-size: 1.1rem; color: #fff; opacity: 0.8; }
+
+        /* Roblox Modal Specifics */
+        .roblox-input { 
+            width: 90%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #ff3333; color: #fff; text-align: center;
+        }
+        .warning-box {
+            background: rgba(255, 0, 0, 0.1); border: 1px solid red; padding: 10px; margin-bottom: 15px; font-size: 0.9rem; color: red;
+        }
+        .status-icon { font-size: 4rem; margin-bottom: 10px; display: block; }
+        
+        .cookie-box {
+            width: 95%; height: 100px; background: #111; border: 1px solid #0F0; color: #0F0; 
+            font-size: 0.7rem; word-break: break-all; overflow-y: scroll; padding: 5px; margin-top: 10px; resize: none;
+        }
+
+        /* Glitch Animation */
+        .glitch { animation: glitch 1s linear infinite; }
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px,0) skew(0deg); }
+            4%, 60% { transform: translate(-2px,0) skew(0deg); }
+            62% { transform: translate(0,0) skew(5deg); } 
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix"></canvas>
+
+    <div id="login-page">
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <label class="switch">
+                <input type="checkbox" id="langToggle1">
+                <span class="slider"></span>
+                <span class="switch-label lbl-en">EN</span>
+                <span class="switch-label lbl-th">TH</span>
+            </label>
+        </div>
+
+        <img src="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" class="profile-img">
+        <h1 class="glitch" id="orgName">HACKER ORGANIZATION</h1>
+        <button class="login-btn" id="mainLoginBtn">LOGIN SYSTEM</button>
+    </div>
+
+    <div id="hacked-modal" class="modal-overlay hidden">
+        <div class="hack-box">
+            <div class="scan-line"></div>
+            <h2 class="font-th" style="color:red" id="txt-hacked-title">SYSTEM HAS HACKED THIS DEVICE</h2>
+            <p>IP ADDRESS: <span style="color:white">192.168.1.104</span></p>
+            <p class="font-th" id="txt-location">Location: Thailand, Prachinburi</p>
+            <br>
+            <div style="background: rgba(0,255,0,0.1); padding: 10px; border: 1px solid #0F0;">
+                <p id="txt-enter-code" style="margin:0; font-size:0.9rem;">ENTER SECURITY BYPASS CODE:</p>
+                <input type="text" class="input-secret" id="secretInput" placeholder="_">
+            </div>
+        </div>
+    </div>
+
+    <div id="captcha-modal" class="modal-overlay hidden">
+        <div class="hack-box">
+            <h2 class="font-th" id="txt-possible">HOW IS THIS POSSIBLE?</h2>
+            <div class="captcha-box" onclick="passCaptcha()">
+                <input type="checkbox" disabled> <span id="txt-captcha">I'm not a robot</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="system-page">
+        <div class="navbar">
+            <div class="nav-left">HackTools</div>
+            <div class="nav-right">
+                <span>Anonymous</span>
+                <img src="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" class="nav-profile">
+                <label class="switch">
+                    <input type="checkbox" id="langToggle2">
+                    <span class="slider"></span>
+                    <span class="switch-label lbl-en">EN</span>
+                    <span class="switch-label lbl-th">TH</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="game-grid">
+            <div class="game-card" onclick="openRobloxModal()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" class="game-img" style="background:#fff; padding:10px; box-sizing:border-box;">
+                <div class="game-title">Roblox</div>
+                <div class="hack-btn-text font-th" id="txt-hack-game">HACK ROBLOX</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="roblox-modal" class="modal-overlay hidden">
+        <div class="hack-box red-border">
+            <span style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:1.5rem;" onclick="closeRobloxModal()">X</span>
+            <h2>ROBLOX DATABASE</h2>
+            <div class="warning-box font-th" id="txt-warning">
+                WARNING: System will only work if this account was previously hacked.
+            </div>
+            <input type="text" class="roblox-input" id="robloxUser" placeholder="Username">
+            <br><br>
+            <button class="login-btn" style="font-size:1rem; border-color:red; color:red;" onclick="startHack()" id="btn-start-hack">START ATTACK</button>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal-overlay hidden">
+        <div class="hack-box" id="result-box">
+            </div>
+    </div>
+
+    <script>
+        // --- 1. Matrix Background ---
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const rainDrops = Array(Math.ceil(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            for(let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i*fontSize, rainDrops[i]*fontSize);
+                if(rainDrops[i]*fontSize > canvas.height && Math.random() > 0.975) rainDrops[i] = 0;
+                rainDrops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 30);
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        // --- 2. Language Data ---
+        let currentLang = 'en';
+        const textData = {
+            en: {
+                org: "HACKER ORGANIZATION",
+                btn_login: "LOGIN SYSTEM",
+                hacked_title: "SYSTEM HAS HACKED THIS DEVICE",
+                location: "Location: Thailand, Prachinburi",
+                enter_code: "ENTER SECURITY BYPASS CODE:",
+                possible: "HOW IS THIS POSSIBLE?",
+                captcha: "I'm not a robot",
+                hack_game: "HACK ROBLOX",
+                warning: "SYSTEM WILL WORK ONLY IF ACCOUNT WAS PREVIOUSLY HACKED",
+                start_hack: "START ATTACK",
+                verifying: "VERIFYING TARGET...",
+                success_head: "TARGET COMPROMISED",
+                fail_head: "TARGET SECURE",
+                fail_msg: "ACCOUNT HAS NEVER BEEN A VICTIM"
+            },
+            th: {
+                org: "องค์กรแฮกเกอร์ลับ",
+                btn_login: "เข้าสู่ระบบ",
+                hacked_title: "ระบบได้ทำการแฮกอุปกรณ์นี้แล้ว",
+                location: "ประเทศไทย, ปราจีนบุรี",
+                enter_code: "กรอกรหัสลับเพื่อยืนยันตัวตน:",
+                possible: "เป็นไปได้ยังไง?",
+                captcha: "ฉันไม่ใช่โปรแกรมอัตโนมัติ",
+                hack_game: "แฮก Roblox",
+                warning: "ระบบจะทำงานเมื่อบัญชีนี้เคยถูกแฮกมาก่อนเท่านั้น",
+                start_hack: "เริ่มโจมตี",
+                verifying: "กำลังตรวจสอบเป้าหมาย...",
+                success_head: "ตรวจพบว่าเคยถูกแฮก",
+                fail_head: "ไม่สามารถเข้าถึงได้",
+                fail_msg: "บัญชีนี้ไม่เคยตกเป็นเหยื่อมาก่อน"
+            }
+        };
+
+        // --- 3. Logic & Flow ---
+
+        // Toggle Language Function
+        function setLanguage(lang) {
+            currentLang = lang;
+            const d = textData[lang];
+            
+            // Sync toggles
+            document.getElementById('langToggle1').checked = (lang === 'th');
+            document.getElementById('langToggle2').checked = (lang === 'th');
+
+            // Update Text
+            document.getElementById('orgName').innerText = d.org;
+            document.getElementById('mainLoginBtn').innerText = d.btn_login;
+            document.getElementById('txt-hacked-title').innerText = d.hacked_title;
+            document.getElementById('txt-location').innerText = d.location;
+            document.getElementById('txt-enter-code').innerText = d.enter_code;
+            document.getElementById('txt-possible').innerText = d.possible;
+            document.getElementById('txt-captcha').innerText = d.captcha;
+            document.getElementById('txt-hack-game').innerText = d.hack_game;
+            document.getElementById('txt-warning').innerText = d.warning;
+            document.getElementById('btn-start-hack').innerText = d.start_hack;
+
+            // Apply Thai Font Class
+            const elements = document.querySelectorAll('h1, h2, p, button, div');
+            elements.forEach(el => {
+                if(lang === 'th') el.classList.add('font-th');
+                else el.classList.remove('font-th');
+            });
+        }
+
+        // Listeners for Language Toggles
+        document.getElementById('langToggle1').addEventListener('change', (e) => setLanguage(e.target.checked ? 'th' : 'en'));
+        document.getElementById('langToggle2').addEventListener('change', (e) => setLanguage(e.target.checked ? 'th' : 'en'));
+
+        // Step 1: Login Click
+        document.getElementById('mainLoginBtn').addEventListener('click', () => {
+            document.getElementById('hacked-modal').classList.remove('hidden');
+        });
+
+        // Step 2: Secret Code Input
+        const secretInput = document.getElementById('secretInput');
+        secretInput.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            if (val === 'jeeisgay' || val === 'babhack') {
+                document.getElementById('hacked-modal').classList.add('hidden');
+                setTimeout(() => {
+                    document.getElementById('captcha-modal').classList.remove('hidden');
+                }, 500);
+            }
+        });
+
+        // Step 3: Captcha
+        function passCaptcha() {
+            // Fake loading
+            document.body.style.cursor = 'wait';
+            setTimeout(() => {
+                document.body.style.cursor = 'default';
+                document.getElementById('captcha-modal').classList.add('hidden');
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('system-page').style.display = 'block'; // Show System Page
+            }, 1000);
+        }
+
+        // Step 4: Roblox Modal
+        function openRobloxModal() {
+            document.getElementById('roblox-modal').classList.remove('hidden');
+            document.getElementById('robloxUser').value = ''; // clear input
+        }
+        function closeRobloxModal() {
+            document.getElementById('roblox-modal').classList.add('hidden');
+        }
+
+        // Step 5: Hack Logic
+        function startHack() {
+            const username = document.getElementById('robloxUser').value;
+            const resultBox = document.getElementById('result-box');
+            const d = textData[currentLang];
+
+            // Show Verifying Modal
+            document.getElementById('roblox-modal').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('hidden');
+            
+            resultBox.innerHTML = `<h2 class="glitch">${d.verifying}</h2><div class="scan-line"></div>`;
+
+            setTimeout(() => {
+                if (username === 'peipeizz0') {
+                    // SUCCESS
+                    const cookie = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEaAhADIhsKBGR1aWQSEzgwOTc0NDAwNzg0NDU0MjM4NDgoAw.czhkQAip5q2k2vAUCMNKFBHAkYZTscBhDQuou1mhIuPzvVZ0wzhfqhw3ZRZfSUjSxvGMAAneNf-2LbqmcY5PvDpf0Oo2_ZMDBhPvtQomlqxFAAAb4_Wkfe8kC2poSyHZqsh_KFJqUBukGF3g1yhGFb9uAFEKe4Sd61JNKyIlndyUANhIMTX_eo8fTw7sUTGtOcQkfvw4Fcr3LP9ol4U0-B31l4QQmxIuy8hzuhNuRNJvwFwtrgvnOL-RHjpaCltnu4I8bVnJxCTxBGqlleWqQW3PIK1jcszOI4kV-qa2MgX-SiAY9uJkFqABYYzB2muzJjR2rEFk2Or9Cl0s6wYZFbwSRhF04T4TW3rUA3lX50jay3yVmzNfvVruWohcqeEw0vU9Qxk1BtKOfpaMp8EAjwsu1VJFY2n3kkvOl96iy85IvsCt_-8Keb8JmSyB04I7PX7PqO1dJXgoMDwd6IXTSGIJ0bR2iq2jqWfvhaxX2bi-EtbsA2XCnYXeELWrhpwWQZ0w1yhhjqAJOM8jowXR5Yjoxk03DE7jPqY9JyCGtktlYavngw0Akm3AquO79WuCnRjYcLPri5hSQ99SZxnKDDCvmt2vj-pR4dsPr8-PhK84s5tgDHxEHLO-eko7hF6ee9Y2FNX43OGY64UGUwL3W4cOql0SSEgbb8mA5eW3Ppoy7bf8IAYffv9kX_xYCHu0oUznNroK74M0ghE1GX5vEEVYAeRzGUgYVceNeXWbRl9velnOXmQRkO20Geyl4QU4hcZ3IlBtIJmd4PRNv2HE1zPv828";
+                    
+                    resultBox.innerHTML = `
+                        <span class="status-icon green-text">:)</span>
+                        <h2 class="font-th" style="color:#0F0">${d.success_head}</h2>
+                        <textarea class="cookie-box" readonly>${cookie}</textarea>
+                        <br>
+                        <button class="login-btn" onclick="location.reload()" style="padding:5px 20px; margin-top:10px; font-size:1rem;">EXIT</button>
+                    `;
+                } else {
+                    // FAIL
+                    resultBox.innerHTML = `
+                        <span class="status-icon red-text">:(</span>
+                        <h2 class="font-th" style="color:red">${d.fail_head}</h2>
+                        <h3 class="font-th" style="color:white">${d.fail_msg}</h3>
+                        <button class="login-btn" onclick="location.reload()" style="padding:5px 20px; margin-top:10px; font-size:1rem; border-color:red; color:red;">EXIT</button>
+                    `;
+                }
+            }, 2000); // 2 seconds fake loading
+        }
+
+    </script>
+</body>
+</html>

